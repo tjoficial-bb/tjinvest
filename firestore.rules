@@ -1,0 +1,73 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+             request.auth.token.email == "tjinvestoficial@gmail.com" &&
+             request.auth.token.email_verified == true;
+    }
+
+    // ===============================================================
+    // Imoveis
+    // ===============================================================
+    match /imoveis/{imovelId} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || (
+        // Permitir atualização não autenticada APENAS para os campos do scraper
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'valor_avaliacao', 'preco_leilao', 'primeira_praca_data', 
+          'primeira_praca_valor', 'segunda_praca_data', 'segunda_praca_valor', 
+          'desconto', 'last_updated'
+        ])
+      );
+    }
+
+    // ===============================================================
+    // Site Settings
+    // ===============================================================
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ===============================================================
+    // FAQs
+    // ===============================================================
+    match /faqs/{faqId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ===============================================================
+    // Testimonials
+    // ===============================================================
+    match /testimonials/{testimonialId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ===============================================================
+    // Blog Posts
+    // ===============================================================
+    match /posts/{postId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ===============================================================
+    // Connection Test
+    // ===============================================================
+    match /test/{testId} {
+      allow read: if true;
+    }
+  }
+}
